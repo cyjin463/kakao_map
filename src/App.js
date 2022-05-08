@@ -6,6 +6,9 @@ const Location = () => {
   const [location, setlocation] = useState("");
   const [address, setAddress] = useState("");
   const [road_address, setRoad_Address] = useState("");
+  const [place, setPlace] = useState("");
+  console.log(typeof place);
+
   var geocoder = new kakao.maps.services.Geocoder();
 
   console.log("지번주소 " + address, "도로명 " + road_address);
@@ -14,7 +17,7 @@ const Location = () => {
   useEffect(() => {
     var mapContainer = document.getElementById("map"), // 지도를 표시할 div
       mapOption = {
-        center: new kakao.maps.LatLng(33.450701, 126.570667), // 지도의 중심좌표
+        center: new kakao.maps.LatLng(37.525999999999996, 127.08659999999999), // 지도의 중심좌표
         level: 3, // 지도의 확대 레벨
       };
 
@@ -79,7 +82,30 @@ const Location = () => {
         }
       });
     });
-  }, []);
+
+    // 장소 검색 객체를 생성합니다
+    var ps = new kakao.maps.services.Places();
+
+    // 키워드로 장소를 검색합니다
+    ps.keywordSearch(place, placesSearchCB);
+
+    function placesSearchCB(data, status) {
+      console.log(data);
+      console.log(status);
+      if (status === kakao.maps.services.Status.OK) {
+        // 검색된 장소 위치를 기준으로 지도 범위를 재설정하기위해
+        // LatLngBounds 객체에 좌표를 추가합니다
+        var bounds = new kakao.maps.LatLngBounds();
+
+        for (var i = 0; i < data.length; i++) {
+          bounds.extend(new kakao.maps.LatLng(data[i].y, data[i].x));
+        }
+
+        // 검색된 장소 위치를 기준으로 지도 범위를 재설정합니다
+        map.setBounds(bounds);
+      }
+    }
+  }, [place]);
 
   const searchDetailAddrFromCoords = (coords, callback) => {
     geocoder.coord2Address(coords.getLng(), coords.getLat(), callback);
@@ -101,18 +127,22 @@ const Location = () => {
       var locPosition = new kakao.maps.LatLng(33.450701, 126.570667);
       Locposition(locPosition);
     }
-
-    // 지도 중심좌표를 접속위치로 변경합니다
   };
 
   const Locposition = (L) => {
     location.setCenter(L);
   };
 
+  const onKeyPress = (e) => {
+    if (e.key == "Enter") {
+      setPlace(e.target.value);
+    }
+  };
+
   return (
     <div>
-      <div id='map' style={{ width: "500px", height: "400px" }}></div>
-      {/* <input onKeyPress={onKeyPress} placeholder='검색'></input> */}
+      <div id='map' style={{ width: "700px", height: "700px" }}></div>
+      <input onKeyPress={onKeyPress} placeholder='검색'></input>
       <button onClick={setCenter}>내위치 찾기</button>
     </div>
   );
